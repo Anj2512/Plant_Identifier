@@ -9,10 +9,14 @@ import os
 from PIL import Image
 import io
 
+import json
+from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PLANTS_JSON_PATH = PROJECT_ROOT / "plant-api" / "plants.json"
 
-
-PLANT_DATA = {}
+with open(PLANTS_JSON_PATH, "r", encoding="utf-8") as f:
+    PLANT_DATA = json.load(f)
 
 app = FastAPI()
 
@@ -65,34 +69,38 @@ NAME_REMAP = {
 
 def get_plant_info(plant_name):
     plant_name = NAME_REMAP.get(plant_name, plant_name)
-    try:
-        encoded_name = plant_name.replace(' ', '%20')
-        response = requests.get(f"{PLANT_API_URL}/plants/{encoded_name}")
-        if response.status_code == 200:
-            info = response.json().get("data", {})
-        else:
-            info = None
-    except Exception as e:
-        print(f"Plant API call failed: {e}")
-        info = None
+
+    info = None
+
+    for key in PLANT_DATA:
+        if key.lower() == plant_name.lower():
+            info = dict(PLANT_DATA[key])
+            break
 
     if info is None:
         return None
 
     try:
-        # use scientific name if available, otherwise common name
-        search_term = info.get('scientific_name', plant_name)
+        search_term = info.get("scientific_name", plant_name)
         inat_url = f"https://api.inaturalist.org/v1/taxa?q={search_term}&rank=species&limit=1"
-        inat_response = requests.get(inat_url, headers={"User-Agent": "PlantSenseApp/1.0"})
+
+        inat_response = requests.get(
+            inat_url,
+            headers={"User-Agent": "PlantSenseApp/1.0"},
+            timeout=10
+        )
+
         if inat_response.status_code == 200:
             data = inat_response.json()
-            if data.get('results') and len(data['results']) > 0:
-                taxon = data['results'][0]
-                info["image"] = taxon.get('default_photo', {}).get('medium_url', None)
-                info["wikipedia_url"] = taxon.get('wikipedia_url', None)
+
+            if data.get("results") and len(data["results"]) > 0:
+                taxon = data["results"][0]
+                info["image"] = taxon.get("default_photo", {}).get("medium_url", None)
+                info["wikipedia_url"] = taxon.get("wikipedia_url", None)
             else:
                 info["image"] = None
                 info["wikipedia_url"] = None
+
     except Exception as e:
         print(f"iNaturalist fetch failed: {e}")
         info["image"] = None
