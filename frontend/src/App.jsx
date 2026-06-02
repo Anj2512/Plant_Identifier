@@ -186,7 +186,7 @@ export default function App() {
                     <div className="careGrid">
                       <CareItem label="Water" icon="💧" value={plant.info?.watering} />
                       <CareItem label="Sunlight" icon="☀️" value={plant.info?.sunlight} />
-                      <CareItem label="Soil" icon="🪴" value={plant.info?.soil} />
+                      <CareItem label="Soil" icon="🛤️" value={plant.info?.soil} />
                       <CareItem label="Family" icon="🌱" value={plant.info?.family} />
                     </div>
 
