@@ -1,0 +1,7 @@
+venv/ 
+__pycache__/ 
+*.pyc 
+node_modules/ 
+node_modules/ 
+backend/model/plant_model.keras 
+training/dataset/ 
